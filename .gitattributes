@@ -1,0 +1,147 @@
+# 自动检测文本文件
+* text=auto eol=lf
+# 确保所有特定扩展名的文件正确处理换行符
+*.cs text diff=csharp eol=lf
+*.csproj text diff=xml eol=lf
+*.sln text diff=text eol=lf
+*.json text diff=json eol=lf
+*.js text diff=javascript eol=lf
+*.ts text diff=typescript eol=lf
+*.vue text eol=lf
+*.html text diff=html eol=lf
+*.css text diff=css eol=lf
+*.scss text diff=scss eol=lf
+*.md text diff=markdown eol=lf
+*.yml text diff=yaml eol=lf
+*.yaml text diff=yaml eol=lf
+*.config text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+Dockerfile text eol=lf
+Makefile text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# 二进制文件应被 Git LFS 管理（如果使用）
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.ico filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.gz filter=lfs diff=lfs merge=lfs -text
+*.tar filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
+*.dll filter=lfs diff=lfs merge=lfs -text
+
+# 特定文件的 diff 驱动
+*.sql diff=sql
+*.sh text eol=lf diff=sh
+
+# 特定目录的文件处理
+frontend/webapp/dist/ -text
+frontend/admin-panel/dist/ -text
+backend/**/bin/ -text
+backend/**/obj/ -text
+node_modules/ -text
+.vscode/ -text
+
+# 导出忽略某些文件
+.gitattributes export-ignore
+.gitignore export-ignore
+.github/ export-ignore
+.husky/ export-ignore
+.vscode/ export-ignore
+
+# 语言特定设置
+## C# 文件
+*.cs linguist-language=C#
+
+## TypeScript/JavaScript 文件
+*.ts linguist-language=TypeScript
+*.js linguist-language=JavaScript
+*.vue linguist-language=Vue
+
+## 配置文件
+*.json linguist-language=JSON
+*.yml linguist-language=YAML
+*.yaml linguist-language=YAML
+*.xml linguist-language=XML
+
+# 大文件警告（>10MB）
+*.{png,jpg,jpeg,gif,ico,pdf,zip,exe,dll} filter=lfs -text
+* -text !eol !diff !merge
+
+# 特定平台文件
+## Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+## Unix
+*.sh text eol=lf
+
+# 文档文件
+*.md diff=markdown
+*.txt diff
+*.rst diff
+LICENSE diff
+README.md diff
+CHANGELOG.md diff
+CONTRIBUTING.md diff
+
+# 测试文件
+*.test.ts diff
+*.spec.ts diff
+*.test.js diff
+*.spec.js diff
+*.test.cs diff
+*.spec.cs diff
+
+# Docker 相关
+Dockerfile.* text eol=lf
+docker-compose*.yml text eol=lf
+
+# Kubernetes 相关
+*.yaml text eol=lf
+*.yml text eol=lf
+kustomization.yaml text eol=lf
+
+# IDE 配置文件
+.editorconfig text
+.eslintrc.* text
+.prettierrc.* text
+tsconfig.* text
+vite.config.* text
+
+# 构建输出
+dist/ export-ignore
+build/ export-ignore
+out/ export-ignore
+coverage/ export-ignore
+*.log -text
+npm-debug.log* -text
+yarn-debug.log* -text
+yarn-error.log* -text
+
+# 敏感文件（应被忽略，这里列出以防万一）
+.env* -text diff
+*.pem -text
+*.key -text
+*.crt -text
+*.pfx -text
+
+# 强制某些文件的行结束符
+*.cs eol=lf
+*.csproj eol=lf
+*.sln eol=lf
+*.json eol=lf
+*.js eol=lf
+*.ts eol=lf
+*.vue eol=lf
+*.html eol=lf
+*.css eol=lf
+*.scss eol=lf
+*.md eol=lf
+*.yml eol=lf
+*.yaml eol=lf
