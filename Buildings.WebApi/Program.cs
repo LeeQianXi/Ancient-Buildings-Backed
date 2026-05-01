@@ -1,10 +1,19 @@
+using System.Security.Cryptography;
 using Buildings.Infrastructure.Data;
 using Buildings.Middleware;
+using Buildings.Utils;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+
+builder.Services
+    .Configure<SnowflakeIdGeneratorOptions>(options => options.MachineId = 1)
+    .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
+    .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
 builder.Services.AddDbContextFactory<BuildingDbContext>(dbBuilder =>
 {
@@ -29,6 +38,34 @@ builder.Services
 
 builder.Services
     .AddControllers();
+
+builder.Services
+    .Configure<JwtBearerOptions>(options =>
+    {
+        const string authority = "https://localhost";
+        options.Authority = authority;
+        const string audience = "AcBu";
+        options.Audience = audience;
+        options.RequireHttpsMetadata = builder.Environment.IsDevelopment();
+        options.IncludeErrorDetails = !builder.Environment.IsDevelopment();
+        var path = configuration["PUBLIC_KEY_FILE"];
+        var publicKeyPem = File.ReadAllText(Path.GetFullPath(path!));
+        var rsa = RSA.Create();
+        rsa.ImportFromPem(publicKeyPem);
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = authority,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new RsaSecurityKey(rsa)
+        };
+    })
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
 
 var app = builder.Build();
 
