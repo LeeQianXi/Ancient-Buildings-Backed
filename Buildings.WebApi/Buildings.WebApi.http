@@ -1,6 +1,63 @@
-@Buildings.WebApi_HostAddress = http://localhost:5224
+###
+GET http://localhost:5224/api/secure/register
+Content-Type: application/json
 
-GET {{Buildings.WebApi_HostAddress}}/weatherforecast/
-Accept: application/json
+{
+  "email": "qianxilee232@163.com",
+  "password": "q1w2e3r4",
+  "username": "QianXi"
+}
+
+<> 2026-05-01T205119.400.txt
+<> 2026-05-01T204241.400.txt
+<> 2026-05-01T182809.200.json
+<> 2026-05-01T182243.500.json
+<> 2026-05-01T172946.400.txt
+<> 2026-05-01T172807.415.json
+<> 2026-05-01T172644.415.json
+<> 2026-05-01T172458.500.json
+<> 2026-05-01T172402.500.json
+<> 2026-05-01T172332.500.json
 
 ###
+POST http://localhost:5224/api/secure/login
+Content-Type: application/json
+
+{
+  "email": "qianxilee232@163.com",
+  "password": "q1w2e3r4",
+  "hash": "dev"
+}
+
+<> 2026-05-01T205125.200.json
+<> 2026-05-01T204330.500.json
+<> 2026-05-01T204305.400.json
+<> 2026-05-01T185524.200.json
+<> 2026-05-01T184540.500.json
+<> 2026-05-01T184253.200.json
+<> 2026-05-01T183547.200.json
+<> 2026-05-01T182900.500.json
+
+###
+GET http://localhost:5224/api/secure/ping
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjQ3NjU3ODk5NTMwOTE1ODQwIiwiZW1haWwiOiJxaWFueGlsZWUyMzJAMTYzLmNvbSIsImF0X2hhc2giOiJkZXYiLCJqdGkiOiJiNThlYTM3YS1kODEyLTQ5MWMtYTkzMi1kZDZlNGViYzkwMGYiLCJuYmYiOjE3Nzc2Mzk4ODUsImV4cCI6MTc3NzY0MDc4NSwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3QiLCJhdWQiOiJBY0J1In0.RQ-qDGHcHX_mXOBDQQK9A2nhgzn5UX2ahE6JpqwyugJmiQIM_14AAU1GTaHpiqrgVbzzP1lyKQJFAH1utPjnpwD0lJGg4kARiyOXkh6e21PiVUgHG5168M8trLqbNEkSSdQ4XbNBcZuelguKXKNugVXkIUT6ggdsPBya746E9ZGTiiNOhKTsua9Ob8Jh9l_vymW-7fEDI5Mp-z_RZ-37W1_Zyfc90jkDIL9GmbbHPTtydBGOVfUbxrjPZ6MORxn-7gomPF7tKyhLAmjVIraMSxSYd9_2kQf6olajixbIdDAmfwWlIWVWrih8B0kahDqP52Vieu9Zlys8yGw9bUazoA
+
+###
+GET http://localhost:5224/api/secure/refresh
+Content-Type: application/json
+
+{
+  "userId": 1247657899530915840,
+  "email": "qianxilee232@163.com",
+  "hash": "dev",
+  "refreshToken": "93c66d0c-3716-4c70-876b-11bd04fd5479"
+}
+
+<> 2026-05-01T205327.200.json
+<> 2026-05-01T205317.200.json
+
+###
+GET http://localhost:5224/openapi/v1.json
+
+<> 2026-05-01T205346.200.json
+<> 2026-05-01T202524.200.json

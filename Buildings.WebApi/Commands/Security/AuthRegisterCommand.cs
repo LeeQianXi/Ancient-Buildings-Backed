@@ -3,17 +3,16 @@ using FluentValidation;
 namespace Buildings.Commands.Security;
 
 [Serializable]
-public sealed record RegisterAccountCommand
+public sealed record AuthRegisterCommand
 {
     public required string Email { get; init; }
     public required string Password { get; init; }
     public required string Username { get; init; }
-    public required string ConfirmKey { get; init; }
 }
 
-internal sealed class RegisterAccountValidator : AbstractValidator<RegisterAccountCommand>
+internal sealed class AuthRegisterValidator : AbstractValidator<AuthRegisterCommand>
 {
-    public RegisterAccountValidator()
+    public AuthRegisterValidator()
     {
         RuleFor(r => r.Username)
             .NotEmpty().WithMessage("Username is required.")
@@ -23,7 +22,5 @@ internal sealed class RegisterAccountValidator : AbstractValidator<RegisterAccou
         RuleFor(r => r.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email address.");
-        RuleFor(r => r.ConfirmKey)
-            .NotEmpty().WithMessage("Confirm key is required.");
     }
 }

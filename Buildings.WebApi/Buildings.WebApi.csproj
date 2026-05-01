@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6"/>
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0"/>
     </ItemGroup>
@@ -37,15 +38,9 @@
 
     <ItemGroup>
         <Folder Include="Annotation\"/>
-        <Folder Include="Commands\"/>
         <Folder Include="Enums\"/>
         <Folder Include="Events\"/>
         <Folder Include="Exceptions\"/>
-        <Folder Include="Infrastructure\Data\Configurations\"/>
-        <Folder Include="Infrastructure\Repositories\"/>
-        <Folder Include="Infrastructure\Services\"/>
-        <Folder Include="Responses\"/>
-        <Folder Include="Utils\"/>
     </ItemGroup>
 
 </Project>

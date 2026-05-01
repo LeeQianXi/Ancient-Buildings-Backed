@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using Buildings.Infrastructure.Data;
+using Buildings.Infrastructure.Repositories;
+using Buildings.Infrastructure.Services;
 using Buildings.Middleware;
 using Buildings.Utils;
 using FluentValidation;
@@ -16,56 +18,76 @@ builder.Services
     .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
 builder.Services.AddDbContextFactory<BuildingDbContext>(dbBuilder =>
-{
-    var connectionString = configuration["SQLSERVER_CONNECTION_STRING"];
-    if (connectionString is null)
     {
-        var path = configuration["SQLSERVER_CONNECTION_STRING_FILE"];
-        if (File.Exists(path)) connectionString = File.ReadAllText(path);
-    }
+        var connectionString = configuration["SQLSERVER_CONNECTION_STRING"];
+        if (connectionString is null)
+        {
+            var path = configuration["SQLSERVER_CONNECTION_STRING_FILE"];
+            if (File.Exists(path)) connectionString = File.ReadAllText(path);
+        }
 
-    if (connectionString is null)
-        throw new ArgumentNullException(nameof(connectionString));
-    dbBuilder.UseSqlServer(connectionString);
-});
+        if (connectionString is null)
+            throw new ArgumentNullException(nameof(connectionString));
+        dbBuilder.UseSqlServer(connectionString);
+    })
+    .AddScoped<IAccountRepository, AccountRepository>();
 
 builder.Services
-    .AddValidatorsFromAssembly(typeof(Program).Assembly);
+    .AddValidatorsFromAssembly(typeof(Program).Assembly, includeInternalTypes: true);
 
 builder.Services
     .AddProblemDetails()
+    .AddExceptionHandler<ValidationExceptionHandler>()
     .AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services
+    .AddOpenApi("v1")
     .AddControllers();
 
 builder.Services
-    .Configure<JwtBearerOptions>(options =>
-    {
-        const string authority = "https://localhost";
-        options.Authority = authority;
-        const string audience = "AcBu";
-        options.Audience = audience;
-        options.RequireHttpsMetadata = builder.Environment.IsDevelopment();
-        options.IncludeErrorDetails = !builder.Environment.IsDevelopment();
-        var path = configuration["PUBLIC_KEY_FILE"];
-        var publicKeyPem = File.ReadAllText(Path.GetFullPath(path!));
-        var rsa = RSA.Create();
-        rsa.ImportFromPem(publicKeyPem);
-        options.TokenValidationParameters = new TokenValidationParameters
+    .Configure<JwtBearerOptions>(
+        JwtBearerDefaults.AuthenticationScheme,
+        options =>
         {
-            ValidateIssuer = true,
-            ValidIssuer = authority,
-            ValidateAudience = true,
-            ValidAudience = audience,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1),
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new RsaSecurityKey(rsa)
-        };
-    })
+            const string audience = "AcBu";
+            options.Audience = audience;
+            options.RequireHttpsMetadata = builder.Environment.IsDevelopment();
+            options.IncludeErrorDetails = !builder.Environment.IsDevelopment();
+
+            var path = configuration["PUBLIC_KEY_FILE"] ??
+                       throw new ArgumentException("PublicKey file path is required.");
+            var publicKeyPem = File.ReadAllText(Path.GetFullPath(path));
+            var rsa = RSA.Create();
+            rsa.ImportFromPem(publicKeyPem);
+
+            const string authority = "https://localhost";
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = authority,
+                ValidateAudience = true,
+                ValidAudience = audience,
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(1),
+
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new RsaSecurityKey(rsa)
+            };
+        })
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer();
+builder.Services
+    .Configure<TokenServiceOptions>(
+        JwtBearerDefaults.AuthenticationScheme,
+        options =>
+        {
+            options.PublicKeyFilePath = configuration["PUBLIC_KEY_FILE"] ??
+                                        throw new ArgumentException("PublicKey file path is required.");
+            options.PrivateKeyFilePath = configuration["PRIVATE_KEY_FILE"] ??
+                                         throw new ArgumentException("PrivateKey file path is required.");
+        })
+    .AddSingleton<ITokenService, TokenService>();
 
 var app = builder.Build();
 
@@ -80,6 +102,7 @@ else
     app.UseHsts();
 }
 
+if (app.Environment.IsDevelopment()) app.MapOpenApi();
 // HTTPS 重定向
 app.UseHttpsRedirection();
 // 静态文件（应放在路由之前，避免不必要的路由处理）
