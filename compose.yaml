@@ -1,16 +1,6 @@
 ﻿version: 'v3'
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sql-server
-    user: "0:0"
-    environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "!Q1w2e3r4"
-    ports:
-      - "1433:1433"
-    volumes:
-      - data:/var/opt/mssql/data
+  postgres:
 volumes:
   data:
 

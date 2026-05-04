@@ -9,8 +9,16 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<BuildingDb
     public BuildingDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<BuildingDbContext>();
-        optionsBuilder.UseSqlServer(
-            "Server=127.0.0.1;Database=buildings;User Id=sa;Password=!Q1w2e3r4;Encrypt=True;TrustServerCertificate=True;",
+        var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING");
+        if (connectionString is null)
+        {
+            var connectionStringPath = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING_FILE")
+                                       ?? throw new ArgumentNullException(nameof(connectionString));
+            connectionString = File.ReadAllText(connectionStringPath);
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        optionsBuilder.UseNpgsql(connectionString,
             option => option.MigrationsHistoryTable($"__EFMigrationsHistory_{nameof(Buildings)}"));
         return new BuildingDbContext(optionsBuilder.Options);
     }

@@ -19,16 +19,16 @@ builder.Services
 
 builder.Services.AddDbContextFactory<BuildingDbContext>(dbBuilder =>
     {
-        var connectionString = configuration["SQLSERVER_CONNECTION_STRING"];
+        var connectionString = configuration["DATABASE_CONNECTION_STRING"];
         if (connectionString is null)
         {
-            var path = configuration["SQLSERVER_CONNECTION_STRING_FILE"];
+            var path = configuration["DATABASE_CONNECTION_STRING_FILE"];
             if (File.Exists(path)) connectionString = File.ReadAllText(path);
         }
 
         if (connectionString is null)
             throw new ArgumentNullException(nameof(connectionString));
-        dbBuilder.UseSqlServer(connectionString);
+        dbBuilder.UseNpgsql(connectionString);
     })
     .AddScoped<IAccountRepository, AccountRepository>();
 

@@ -1,11 +1,12 @@
+using System.Data.Common;
 using Buildings.Dtos;
 using Buildings.Enums;
 using Buildings.Exceptions;
 using Buildings.Infrastructure.Data;
 using Buildings.Infrastructure.Data.Entities;
 using Buildings.Utils;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Buildings.Infrastructure.Repositories;
 
@@ -85,7 +86,7 @@ internal sealed class AccountRepository(
             await dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
         }
-        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        catch (DbUpdateException ex) when (ex.InnerException is DbException)
         {
             await transaction.RollbackAsync();
             throw new AccountException("Account already exists.", AccountAction.Register);
@@ -318,7 +319,7 @@ internal sealed class AccountRepository(
             await dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
         }
-        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        catch (DbUpdateException ex) when (ex.InnerException is NpgsqlException)
         {
             await transaction.RollbackAsync();
             throw new AccountException("Account already exists.", AccountAction.Register);
