@@ -8,6 +8,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -17,20 +18,24 @@ builder.Services
     .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
     .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
-builder.Services.AddDbContextFactory<BuildingDbContext>(dbBuilder =>
-    {
-        var connectionString = configuration["DATABASE_CONNECTION_STRING"];
-        if (connectionString is null)
-        {
-            var path = configuration["DATABASE_CONNECTION_STRING_FILE"];
-            if (File.Exists(path)) connectionString = File.ReadAllText(path);
-        }
-
-        if (connectionString is null)
-            throw new ArgumentNullException(nameof(connectionString));
-        dbBuilder.UseNpgsql(connectionString);
-    })
+#region DbContext
+var connectionString = configuration["DATABASE_CONNECTION_STRING"];
+if (connectionString is null)
+{
+    var path = configuration["DATABASE_CONNECTION_STRING_FILE"];
+    if (File.Exists(path)) connectionString = File.ReadAllText(path);
+}
+if (connectionString is null)
+    throw new ArgumentNullException(nameof(connectionString));
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+dataSourceBuilder.EnableDynamicJson();
+var dataSource = dataSourceBuilder.Build();
+builder.Services
+    .AddDbContextFactory<BuildingDbContext>(options =>
+            options.UseNpgsql(dataSource)
+    )
     .AddScoped<IAccountRepository, AccountRepository>();
+#endregion
 
 builder.Services
     .AddValidatorsFromAssembly(typeof(Program).Assembly, includeInternalTypes: true);

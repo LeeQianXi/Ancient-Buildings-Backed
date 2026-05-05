@@ -5,8 +5,8 @@ namespace Buildings.Commands.Buildings;
 [Serializable]
 public sealed record SplitPageCommand
 {
-    public int? Page { get; init; } = 1;
-    public int? PageSize { get; init; } = 12;
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 12;
     public ICollection<string> Searches { get; set; } = [];
     public ICollection<string> Provinces { get; set; } = [];
     public ICollection<string> Categories { get; set; } = [];
