@@ -67,7 +67,7 @@ internal sealed class AccountRepository(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         if (await ExistsAccountAsync(dbContext, email))
             throw new AccountException("Email already registered", AccountAction.Register);
-        var uid = idGenerator.NextId();
+        var uid = idGenerator.NextId() >> 8;
         var timeNow = DateTimeOffset.UtcNow;
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
         try
@@ -300,7 +300,7 @@ internal sealed class AccountRepository(
     {
         if (await ExistsAccountAsync(dbContext, email))
             throw new AccountException("Email already registered", AccountAction.Register);
-        var uid = idGenerator.NextId();
+        var uid = idGenerator.NextId() >> 8;
         var timeNow = DateTimeOffset.UtcNow;
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
         try

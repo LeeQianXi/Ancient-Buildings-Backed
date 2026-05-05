@@ -1,42 +1,70 @@
 using Buildings.Commands.Buildings;
-using Buildings.Infrastructure.Data;
+using Buildings.Responses.Buildings;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Buildings.Controllers;
 
 [ApiController]
-[Route("/api/buildings")]
+[Route("/api/v1/[controller]")]
+[Tags("Buildings")]
 public class BuildingsController(
-    ILogger<BuildingsController> logger,
-    IDbContextFactory<BuildingDbContext> dbContextFactory
+    ILogger<BuildingsController> logger
 ) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSplitPageAsync([FromBody] SplitPageCommand command)
+    [ProducesResponseType<BuildingSummaryResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSummeryAsync()
     {
-        return Ok();
+        //TODO: GetData
+        return Ok(new BuildingSummaryResponse
+        {
+            Total = 0,
+            Categories = new string[] { }.WrapAsPair(),
+            Dynasties = new string[] { }.WrapAsPair(),
+            Provinces = new string[] { }.WrapAsPair()
+        });
     }
 
-    [HttpGet("provinces")]
-    [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProvincesAsync()
+    [HttpPost]
+    [ProducesResponseType<SplitPageResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetSplitPageAsync(
+        [FromQuery] SplitPageCommand command,
+        [FromServices] IValidator<SplitPageCommand> validator
+    )
     {
-        return Ok();
+        var validate = await validator.ValidateAsync(command);
+        if (!validate.IsValid) throw new ValidationException(validate.Errors);
+        //TODO: GetData
+        return Ok(new SplitPageResponse());
     }
 
-    [HttpGet("categories")]
-    [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCategoriesAsync()
+    /// <summary>
+    ///     获取hash路径下的文章
+    /// </summary>
+    /// <param name="hash"></param>
+    /// <returns></returns>
+    [HttpGet("{hash}")]
+    [ProducesResponseType<BuildingArticle>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArticleByHashAsync([FromRoute] string hash)
     {
-        return Ok();
+        logger.LogInformation("GET /api/buildings/{hash}", hash);
+        return Ok(new BuildingArticle());
     }
 
-    [HttpGet("dynasties")]
-    [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDynastiesAsync()
+    /// <summary>
+    ///     重定向到文章
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    [HttpGet("name/{name}")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArticleByNameAsync([FromRoute] string name)
     {
-        return Ok();
+        var hash = name;
+        return RedirectToAction("GetArticleByHash", "Buildings", new { hash });
     }
 }

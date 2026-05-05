@@ -102,9 +102,17 @@ else
     app.UseHsts();
 }
 
-if (app.Environment.IsDevelopment()) app.MapOpenApi();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "v1"); // 设置文档路径
+    });
+}
+
 // HTTPS 重定向
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 // 静态文件（应放在路由之前，避免不必要的路由处理）
 app.UseStaticFiles();
 // 路由匹配（必须放在身份验证、授权等之前）

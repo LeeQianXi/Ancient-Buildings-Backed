@@ -1,6 +1,11 @@
 ﻿version: 'v3'
 services:
   postgres:
-volumes:
-  data:
-
+    image: postgres:latest
+    container_name: pg-service
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: buildings
+    ports:
+      - "5432:5432"

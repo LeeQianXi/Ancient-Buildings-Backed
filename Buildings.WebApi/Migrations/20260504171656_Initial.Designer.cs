@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Buildings.Migrations
 {
     [DbContext(typeof(BuildingDbContext))]
-    [Migration("20260504124550_Initial")]
+    [Migration("20260504171656_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -53,7 +53,7 @@ namespace Buildings.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<DateTimeOffset?>("DeleteAt")
                         .HasColumnType("timestamp with time zone");
@@ -73,7 +73,7 @@ namespace Buildings.Migrations
                     b.Property<DateTimeOffset>("UpdateAt")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("UserName")
                         .IsRequired()

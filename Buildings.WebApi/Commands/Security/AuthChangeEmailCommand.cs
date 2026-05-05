@@ -3,15 +3,15 @@ using FluentValidation;
 namespace Buildings.Commands.Security;
 
 [Serializable]
-public sealed record ChangeAccountEmailCommand
+public sealed record AuthChangeEmailCommand
 {
     public required long UserId { get; init; }
     public required string NewEmail { get; init; }
 }
 
-internal sealed class UpdateAccountInfoValidator : AbstractValidator<ChangeAccountEmailCommand>
+internal sealed class AuthChangeEmailValidator : AbstractValidator<AuthChangeEmailCommand>
 {
-    public UpdateAccountInfoValidator()
+    public AuthChangeEmailValidator()
     {
         RuleFor(r => r.UserId)
             .NotEmpty().WithMessage("User ID is required.");

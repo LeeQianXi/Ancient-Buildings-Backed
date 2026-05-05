@@ -1,4 +1,4 @@
-namespace Buildings.Responses;
+namespace Buildings.Responses.Secure;
 
 public sealed record RefreshTokenResponse
 {

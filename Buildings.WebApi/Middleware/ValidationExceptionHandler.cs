@@ -16,31 +16,24 @@ public class ValidationExceptionHandler(
     {
         if (exception is not ValidationException validationException)
             return false;
-
         logger.LogError(exception, "ValidationException Occurred");
-
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-
         var context = new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails
+            ProblemDetails = new ValidationProblemDetails
             {
                 Title = "One or more Validation Errors occurred.",
-                Status = StatusCodes.Status400BadRequest
+                Status = StatusCodes.Status400BadRequest,
+                Errors = validationException.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(x => x.ErrorMessage).ToArray()
+                    )
             }
         };
-
-        var errors = validationException.Errors
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(
-                g => g.Key.ToLowerInvariant(),
-                g => g.Select(e => e.ErrorMessage).ToArray()
-            );
-
-        context.ProblemDetails.Extensions.Add("errors", errors);
-
         return await problemDetailsService.TryWriteAsync(context);
     }
 }

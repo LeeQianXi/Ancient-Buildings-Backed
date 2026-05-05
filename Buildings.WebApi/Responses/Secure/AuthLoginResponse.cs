@@ -1,4 +1,4 @@
-namespace Buildings.Responses;
+namespace Buildings.Responses.Secure;
 
 [Serializable]
 public sealed record AuthLoginResponse

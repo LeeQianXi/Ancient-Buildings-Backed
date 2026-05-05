@@ -1,7 +1,7 @@
 using Buildings.Commands.Security;
 using Buildings.Infrastructure.Repositories;
 using Buildings.Infrastructure.Services;
-using Buildings.Responses;
+using Buildings.Responses.Secure;
 using Buildings.Utils;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -9,26 +9,29 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Buildings.Controllers;
 
-[ApiController]
-[Route("/api/secure")]
 [Authorize]
+[ApiController]
+[Route("/api/v1/[controller]")]
+[Tags("Authentication")]
 public class SecureController(
     ILogger<SecureController> logger,
     IAccountRepository accountRepository
 ) : ControllerBase
 {
     [AllowAnonymous]
-    [HttpGet("register")]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(AuthRegisterResponse), StatusCodes.Status200OK)]
+    [HttpPost("register")]
+    [ProducesResponseType<AuthRegisterResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Register(
         [FromBody] AuthRegisterCommand command,
-        IValidator<AuthRegisterCommand> validator,
-        IPasswordHasher passwordHasher)
+        [FromServices] IValidator<AuthRegisterCommand> validator,
+        [FromServices] IPasswordHasher passwordHasher
+    )
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (await accountRepository.ExistsAccountAsync(command.Email)) return BadRequest("Email already registered");
+        if (await accountRepository.ExistsAccountAsync(command.Email)) return Unauthorized("Email already registered");
         var passwdHash = passwordHasher.SaltedHash(command.Password);
         var account = await accountRepository.InsertAccountAsync(command.Email, passwdHash, command.Username);
         return Ok(new AuthRegisterResponse
@@ -42,17 +45,19 @@ public class SecureController(
 
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(AuthLoginResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Login(
+    [ProducesResponseType<AuthLoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LoginAsync(
         [FromBody] AuthLoginCommand command,
-        IValidator<AuthLoginCommand> validator,
-        IPasswordHasher passwordHasher,
-        ITokenService tokenService)
+        [FromServices] IValidator<AuthLoginCommand> validator,
+        [FromServices] IPasswordHasher passwordHasher,
+        [FromServices] ITokenService tokenService)
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (!await accountRepository.ExistsAccountAsync(command.Email)) return BadRequest("Email doesn't registered.");
+        if (!await accountRepository.ExistsAccountAsync(command.Email)) return NotFound("Email doesn't registered.");
         var (userId, passwordSaltHash) = await accountRepository.GetAccountVerifyAsync(command.Email);
         if (!passwordHasher.Verify(command.Password, passwordSaltHash)) return Unauthorized("Invalid password");
         // 生成访问令牌和刷新令牌
@@ -71,12 +76,14 @@ public class SecureController(
     }
 
     [AllowAnonymous]
-    [HttpGet("refresh")]
-    [ProducesResponseType(typeof(RefreshTokenResponse), StatusCodes.Status200OK)]
+    [HttpPost("refresh")]
+    [ProducesResponseType<RefreshTokenResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> RefreshTokenAsync(
         [FromBody] RefreshTokenCommand command,
-        IValidator<RefreshTokenCommand> validator,
-        ITokenService tokenService
+        [FromServices] IValidator<RefreshTokenCommand> validator,
+        [FromServices] ITokenService tokenService
     )
     {
         var validate = await validator.ValidateAsync(command);
@@ -93,12 +100,80 @@ public class SecureController(
         });
     }
 
+    [HttpPost("changeEmail")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangeEmailAsync(
-        [FromBody] ChangeAccountEmailCommand command,
-        IValidator<ChangeAccountEmailCommand> validator)
+        [FromBody] AuthChangeEmailCommand command,
+        IValidator<AuthChangeEmailCommand> validator)
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
+        if (!await accountRepository.ExistsAccountAsync(command.UserId))
+            return NotFound("User doesn't exist.");
+        await accountRepository.ChangeEmailAsync(command.UserId, command.NewEmail);
         return Ok();
+    }
+
+    [HttpPost("changePassword")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePasswordAsync(
+        [FromBody] AuthChangePasswordCommand command,
+        IValidator<AuthChangePasswordCommand> validator)
+    {
+        var validate = await validator.ValidateAsync(command);
+        if (!validate.IsValid) throw new ValidationException(validate.Errors);
+        if (await accountRepository.ExistsAccountAsync(command.UserId))
+            return NotFound("User doesn't exist.");
+        //TODO: Validate Cofirm key
+        await accountRepository.ChangePasswordAsync(command.UserId, command.NewPassword);
+        return Ok();
+    }
+
+    [HttpGet("changePassword")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangePasswordAsync([FromHeader] long userId)
+    {
+        if (await accountRepository.ExistsAccountAsync(userId))
+            return NotFound("User doesn't exist.");
+        //TODO: Deal Confirm Key
+        return NoContent();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("resetPassword")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ResetPasswordAsync(
+        [FromBody] AuthResetPasswordCommand command,
+        IValidator<AuthResetPasswordCommand> validator,
+        [FromServices] IPasswordHasher passwordHasher)
+    {
+        var validate = await validator.ValidateAsync(command);
+        if (!validate.IsValid) throw new ValidationException(validate.Errors);
+        if (!await accountRepository.ExistsAccountAsync(command.Email))
+            return NotFound("User doesn't exist.");
+        //TODO: Validate Confirm key
+        var (userId, hash) = await accountRepository.GetAccountVerifyAsync(command.Email);
+        if (!passwordHasher.Verify(command.Password, hash))
+            return Unauthorized("Invalid Password");
+        await accountRepository.ChangePasswordAsync(userId, passwordHasher.SaltedHash(command.Password));
+        return Ok();
+    }
+
+    [AllowAnonymous]
+    [HttpGet("resetPassword")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetPasswordAsync([FromHeader] string email)
+    {
+        if (await accountRepository.ExistsAccountAsync(email))
+            return NotFound("User doesn't exist.");
+        //TODO: Deal Confirm Key
+        return NoContent();
     }
 }

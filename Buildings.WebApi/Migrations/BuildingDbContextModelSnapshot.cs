@@ -50,7 +50,7 @@ namespace Buildings.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<DateTimeOffset?>("DeleteAt")
                         .HasColumnType("timestamp with time zone");
@@ -70,7 +70,7 @@ namespace Buildings.Migrations
                     b.Property<DateTimeOffset>("UpdateAt")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("UserName")
                         .IsRequired()

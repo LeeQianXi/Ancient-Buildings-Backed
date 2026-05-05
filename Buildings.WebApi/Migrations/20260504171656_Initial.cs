@@ -33,9 +33,9 @@ namespace Buildings.Migrations
                     Email = table.Column<string>(type: "character varying(100)", unicode: false, maxLength: 100, nullable: false),
                     PasswordSaltHash = table.Column<string>(type: "character varying(255)", unicode: false, maxLength: 255, nullable: false),
                     UserName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     DeleteAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdateAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    UpdateAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {

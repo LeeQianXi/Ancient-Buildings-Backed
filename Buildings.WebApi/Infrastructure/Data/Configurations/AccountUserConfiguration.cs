@@ -35,11 +35,11 @@ public class AccountUserConfiguration : IEntityTypeConfiguration<AccountUser>
 
         builder.Property(e => e.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
         builder.Property(e => e.UpdateAt)
-            .HasDefaultValueSql("GETUTCDATE()")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAddOrUpdate()
             .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Save);
 
