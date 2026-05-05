@@ -34,7 +34,7 @@ builder.Services
     .AddDbContextFactory<BuildingDbContext>(options =>
             options.UseNpgsql(dataSource)
     )
-    .AddScoped<IAccountRepository, AccountRepository>();
+    .AddScoped<ISecureRepository, SecureRepository>();
 #endregion
 
 builder.Services

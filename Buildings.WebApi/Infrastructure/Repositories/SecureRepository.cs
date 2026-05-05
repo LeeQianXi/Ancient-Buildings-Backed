@@ -10,11 +10,11 @@ using Npgsql;
 
 namespace Buildings.Infrastructure.Repositories;
 
-internal sealed class AccountRepository(
-    ILogger<AccountRepository> logger,
+internal sealed class SecureRepository(
+    ILogger<SecureRepository> logger,
     IDbContextFactory<BuildingDbContext> dbContextFactory,
     IIdGenerator<long> idGenerator
-) : IAccountRepository
+) : ISecureRepository
 {
     public async ValueTask<bool> ExistsAccountAsync(long userId)
     {

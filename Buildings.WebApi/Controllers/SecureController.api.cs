@@ -15,7 +15,7 @@ namespace Buildings.Controllers;
 [Tags("Authentication")]
 public class SecureController(
     ILogger<SecureController> logger,
-    IAccountRepository accountRepository
+    ISecureRepository secureRepository
 ) : ControllerBase
 {
     [AllowAnonymous]
@@ -31,9 +31,9 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (await accountRepository.ExistsAccountAsync(command.Email)) return Unauthorized("Email already registered");
+        if (await secureRepository.ExistsAccountAsync(command.Email)) return Unauthorized("Email already registered");
         var passwdHash = passwordHasher.SaltedHash(command.Password);
-        var account = await accountRepository.InsertAccountAsync(command.Email, passwdHash, command.Username);
+        var account = await secureRepository.InsertAccountAsync(command.Email, passwdHash, command.Username);
         return Ok(new AuthRegisterResponse
         {
             UserId = account.UserId,
@@ -57,13 +57,13 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (!await accountRepository.ExistsAccountAsync(command.Email)) return NotFound("Email doesn't registered.");
-        var (userId, passwordSaltHash) = await accountRepository.GetAccountVerifyAsync(command.Email);
+        if (!await secureRepository.ExistsAccountAsync(command.Email)) return NotFound("Email doesn't registered.");
+        var (userId, passwordSaltHash) = await secureRepository.GetAccountVerifyAsync(command.Email);
         if (!passwordHasher.Verify(command.Password, passwordSaltHash)) return Unauthorized("Invalid password");
         // 生成访问令牌和刷新令牌
         var (accessToken, accessTokenExpiry) = tokenService.GenerateAccessToken(userId, command.Email, command.Hash);
         var (refreshToken, refreshTokenExpiry) = tokenService.GenerateRefreshToken();
-        await accountRepository.CacheRefreshTokenAsync(userId, command.Hash, refreshToken, refreshTokenExpiry);
+        await secureRepository.CacheRefreshTokenAsync(userId, command.Hash, refreshToken, refreshTokenExpiry);
         return Ok(new AuthLoginResponse
         {
             UserId = userId,
@@ -88,7 +88,7 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (!await accountRepository.ValidateRefreshTokenAsync(command.UserId, command.Hash, command.RefreshToken))
+        if (!await secureRepository.ValidateRefreshTokenAsync(command.UserId, command.Hash, command.RefreshToken))
             return Unauthorized("Invalid Refresh Token");
         var (accessToken, accessTokenExpire) =
             tokenService.GenerateAccessToken(command.UserId, command.Email, command.Hash);
@@ -110,9 +110,9 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (!await accountRepository.ExistsAccountAsync(command.UserId))
+        if (!await secureRepository.ExistsAccountAsync(command.UserId))
             return NotFound("User doesn't exist.");
-        await accountRepository.ChangeEmailAsync(command.UserId, command.NewEmail);
+        await secureRepository.ChangeEmailAsync(command.UserId, command.NewEmail);
         return Ok();
     }
 
@@ -125,10 +125,10 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (await accountRepository.ExistsAccountAsync(command.UserId))
+        if (await secureRepository.ExistsAccountAsync(command.UserId))
             return NotFound("User doesn't exist.");
         //TODO: Validate Cofirm key
-        await accountRepository.ChangePasswordAsync(command.UserId, command.NewPassword);
+        await secureRepository.ChangePasswordAsync(command.UserId, command.NewPassword);
         return Ok();
     }
 
@@ -137,7 +137,7 @@ public class SecureController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePasswordAsync([FromHeader] long userId)
     {
-        if (await accountRepository.ExistsAccountAsync(userId))
+        if (await secureRepository.ExistsAccountAsync(userId))
             return NotFound("User doesn't exist.");
         //TODO: Deal Confirm Key
         return NoContent();
@@ -155,13 +155,13 @@ public class SecureController(
     {
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        if (!await accountRepository.ExistsAccountAsync(command.Email))
+        if (!await secureRepository.ExistsAccountAsync(command.Email))
             return NotFound("User doesn't exist.");
         //TODO: Validate Confirm key
-        var (userId, hash) = await accountRepository.GetAccountVerifyAsync(command.Email);
+        var (userId, hash) = await secureRepository.GetAccountVerifyAsync(command.Email);
         if (!passwordHasher.Verify(command.Password, hash))
             return Unauthorized("Invalid Password");
-        await accountRepository.ChangePasswordAsync(userId, passwordHasher.SaltedHash(command.Password));
+        await secureRepository.ChangePasswordAsync(userId, passwordHasher.SaltedHash(command.Password));
         return Ok();
     }
 
@@ -171,7 +171,7 @@ public class SecureController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetPasswordAsync([FromHeader] string email)
     {
-        if (await accountRepository.ExistsAccountAsync(email))
+        if (await secureRepository.ExistsAccountAsync(email))
             return NotFound("User doesn't exist.");
         //TODO: Deal Confirm Key
         return NoContent();

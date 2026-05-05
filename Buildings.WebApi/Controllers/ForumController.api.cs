@@ -11,7 +11,7 @@ namespace Buildings.Controllers;
 [Tags("Forum")]
 public class ForumController(
     ILogger<SecureController> logger,
-    IAccountRepository accountRepository
+    ISecureRepository secureRepository
 ) : ControllerBase
 {
     [HttpGet]

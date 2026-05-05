@@ -8,13 +8,17 @@ public class BuildingDbContext(DbContextOptions<BuildingDbContext> options) : Db
 {
     public DbSet<AccountUser> AccountUsers { get; set; }
     public DbSet<AccountTokens> AccountTokens { get; set; }
-    public DbSet<BuildingArticleData> BuildingArticleDatas { get; set; }
+    public DbSet<BuildingArticleData> BuildingArticleData { get; set; }
+    public DbSet<UserInfo> UserInfos { get; set; }
+    public DbSet<FriendRequest> FriendRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfiguration(new AccountUserConfiguration());
-        modelBuilder.ApplyConfiguration(new AccountTokensConfiguration());
-        modelBuilder.ApplyConfiguration(new BuildingArticleConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountUserConfiguration())
+            .ApplyConfiguration(new AccountTokensConfiguration())
+            .ApplyConfiguration(new BuildingArticleConfiguration())
+            .ApplyConfiguration(new UserInfoConfiguration())
+            .ApplyConfiguration(new FriendRequestConfiguration());
     }
 }

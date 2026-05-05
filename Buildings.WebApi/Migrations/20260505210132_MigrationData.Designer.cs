@@ -107,7 +107,7 @@ namespace Buildings.Migrations
 
                     b.Property<string>("Data")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("json");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -139,7 +139,7 @@ namespace Buildings.Migrations
 
                     b.Property<string>("Seo")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("json");
 
                     b.Property<string>("SubTitle")
                         .IsRequired()

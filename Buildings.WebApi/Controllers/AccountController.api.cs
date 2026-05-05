@@ -12,7 +12,7 @@ namespace Buildings.Controllers;
 [Route("/api/v1/[controller]")]
 public class AccountController(
     ILogger<AccountController> logger,
-    IAccountRepository accountRepository
+    ISecureRepository secureRepository
 ) : ControllerBase
 {
     #region Account
@@ -24,7 +24,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAccountPublicAsync([FromQuery] long userId)
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new AccountPublicInfo
@@ -42,7 +42,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAccountFullAsync([FromHeader] long userId)
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new AccountFullInfo
@@ -64,7 +64,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFriendsSummaryAsync([FromHeader] long userId)
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new FriendsSummary());
@@ -79,7 +79,7 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new SplitFriendsArrayResponse());
@@ -94,7 +94,7 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new SplitFriendsArrayResponse());
@@ -109,7 +109,7 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new SplitFriendsArrayResponse());
@@ -125,7 +125,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPendingRequestsAsync([FromHeader] long userId)
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new NewFriendRequest[] { });
@@ -137,7 +137,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRecentActionsAsync([FromHeader] long userId)
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok(new RecentActivityLog[] { });
@@ -153,7 +153,7 @@ public class AccountController(
         [FromQuery] bool confirm
     )
     {
-        var account = await accountRepository.GetAccountAsync(userId);
+        var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
         return Ok();

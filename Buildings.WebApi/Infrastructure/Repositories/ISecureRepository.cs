@@ -3,7 +3,7 @@ using Buildings.Exceptions;
 
 namespace Buildings.Infrastructure.Repositories;
 
-public interface IAccountRepository
+public interface ISecureRepository
 {
     /// <summary>
     ///     检查账号是否存在
