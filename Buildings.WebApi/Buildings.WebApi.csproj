@@ -39,7 +39,7 @@
 
     <ItemGroup>
         <Folder Include="Annotation\"/>
-        <Folder Include="Commands\Forum\" />
+        <Folder Include="Commands\Forum\"/>
         <Folder Include="Enums\"/>
         <Folder Include="Events\"/>
         <Folder Include="Exceptions\"/>
