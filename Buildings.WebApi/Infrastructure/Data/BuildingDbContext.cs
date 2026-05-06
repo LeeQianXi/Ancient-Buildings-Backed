@@ -11,6 +11,7 @@ public class BuildingDbContext(DbContextOptions<BuildingDbContext> options) : Db
     public DbSet<BuildingArticleData> BuildingArticleData { get; set; }
     public DbSet<UserInfo> UserInfos { get; set; }
     public DbSet<FriendRequest> FriendRequests { get; set; }
+    public DbSet<FriendRelation> FriendRelations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,6 +20,7 @@ public class BuildingDbContext(DbContextOptions<BuildingDbContext> options) : Db
             .ApplyConfiguration(new AccountTokensConfiguration())
             .ApplyConfiguration(new BuildingArticleConfiguration())
             .ApplyConfiguration(new UserInfoConfiguration())
-            .ApplyConfiguration(new FriendRequestConfiguration());
+            .ApplyConfiguration(new FriendRequestConfiguration())
+            .ApplyConfiguration(new FriendRelationConfiguration());
     }
 }

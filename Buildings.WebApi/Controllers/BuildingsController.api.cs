@@ -17,50 +17,11 @@ public class BuildingsController(
     IDbContextFactory<BuildingDbContext> dbContextFactory
 ) : ControllerBase
 {
-    private static class InternalCache
-    {
-        private record Entry(object Data, DateTimeOffset Time)
-        {
-            public object Data { get; set; } = Data;
-            public DateTimeOffset Time { get; set; } = Time;
-        }
-
-        private static readonly ConcurrentDictionary<string, Entry> _cache = new();
-
-        public static void Cache(string key, object data, TimeSpan expiration)
-        {
-            _cache.AddOrUpdate(key,
-                key => new Entry(data, DateTimeOffset.UtcNow + expiration),
-                (key, old) =>
-                {
-                    old.Data = data;
-                    old.Time = DateTimeOffset.UtcNow + expiration;
-                    return old;
-                }
-            );
-        }
-
-        public static void Cache(string key, object data)
-            => Cache(key, data, TimeSpan.FromMinutes(15));
-
-        public static bool TryGet(string ket, [NotNullWhen(true)] out object? data)
-        {
-            data = null;
-            if (!_cache.TryGetValue(ket, out var entry)) return false;
-            if (entry.Time < DateTimeOffset.UtcNow) return false;
-            data = entry.Data;
-            return true;
-        }
-    }
-
     [HttpGet]
     [ProducesResponseType<BuildingSummaryResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSummeryAsync()
     {
-        if (InternalCache.TryGet(nameof(GetSummeryAsync), out var data))
-        {
-            return Ok(data);
-        }
+        if (InternalCache.TryGet(nameof(GetSummeryAsync), out var data)) return Ok(data);
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var total = await dbContext.BuildingArticleData.AsNoTracking().CountAsync();
         var temp = await dbContext.BuildingArticleData.AsNoTracking()
@@ -117,7 +78,7 @@ public class BuildingsController(
                 Dynasties = e.Dynasties,
                 Categories = e.Categories,
                 Provinces = e.Provinces,
-                Hash = e.Hash,
+                Hash = e.Hash
             })
             .ToArrayAsync();
         return Ok(new SplitPageResponse
@@ -175,5 +136,43 @@ public class BuildingsController(
             .FirstOrDefaultAsync();
         if (article is null) return NotFound("Article not found");
         return RedirectToAction("GetArticleByHash", "Buildings", new { article.Hash });
+    }
+
+    private static class InternalCache
+    {
+        private static readonly ConcurrentDictionary<string, Entry> _cache = new();
+
+        public static void Cache(string key, object data, TimeSpan expiration)
+        {
+            _cache.AddOrUpdate(key,
+                key => new Entry(data, DateTimeOffset.UtcNow + expiration),
+                (key, old) =>
+                {
+                    old.Data = data;
+                    old.Time = DateTimeOffset.UtcNow + expiration;
+                    return old;
+                }
+            );
+        }
+
+        public static void Cache(string key, object data)
+        {
+            Cache(key, data, TimeSpan.FromMinutes(15));
+        }
+
+        public static bool TryGet(string ket, [NotNullWhen(true)] out object? data)
+        {
+            data = null;
+            if (!_cache.TryGetValue(ket, out var entry)) return false;
+            if (entry.Time < DateTimeOffset.UtcNow) return false;
+            data = entry.Data;
+            return true;
+        }
+
+        private record Entry(object Data, DateTimeOffset Time)
+        {
+            public object Data { get; set; } = Data;
+            public DateTimeOffset Time { get; set; } = Time;
+        }
     }
 }

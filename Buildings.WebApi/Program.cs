@@ -19,12 +19,14 @@ builder.Services
     .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
 #region DbContext
+
 var connectionString = configuration["DATABASE_CONNECTION_STRING"];
 if (connectionString is null)
 {
     var path = configuration["DATABASE_CONNECTION_STRING_FILE"];
     if (File.Exists(path)) connectionString = File.ReadAllText(path);
 }
+
 if (connectionString is null)
     throw new ArgumentNullException(nameof(connectionString));
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
@@ -32,9 +34,10 @@ dataSourceBuilder.EnableDynamicJson();
 var dataSource = dataSourceBuilder.Build();
 builder.Services
     .AddDbContextFactory<BuildingDbContext>(options =>
-            options.UseNpgsql(dataSource)
+        options.UseNpgsql(dataSource)
     )
     .AddScoped<ISecureRepository, SecureRepository>();
+
 #endregion
 
 builder.Services

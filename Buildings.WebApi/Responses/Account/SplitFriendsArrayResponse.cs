@@ -5,8 +5,6 @@ public sealed record SplitFriendsArrayResponse
 {
     public ICollection<FriendInfo> Users { get; set; } = [];
     public int Count { get; set; }
-    public int Page { get; set; }
-    public int PageSize { get; set; }
 }
 
 [Serializable]

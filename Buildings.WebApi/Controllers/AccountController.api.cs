@@ -1,9 +1,11 @@
 using Buildings.Commands.Account;
 using Buildings.Commands.Friends;
+using Buildings.Infrastructure.Data;
 using Buildings.Infrastructure.Repositories;
 using Buildings.Responses.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Buildings.Controllers;
 
@@ -12,7 +14,8 @@ namespace Buildings.Controllers;
 [Route("/api/v1/[controller]")]
 public class AccountController(
     ILogger<AccountController> logger,
-    ISecureRepository secureRepository
+    ISecureRepository secureRepository,
+    IDbContextFactory<BuildingDbContext> dbContextFactory
 ) : ControllerBase
 {
     #region Account
@@ -67,7 +70,16 @@ public class AccountController(
         var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
-        return Ok(new FriendsSummary());
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var total = await dbContext.FriendRelations.AsNoTracking().CountAsync();
+        var request = await dbContext.FriendRequests.AsNoTracking()
+            .Where(e => e.TargetUserId == userId)
+            .CountAsync();
+        return Ok(new FriendsSummary
+        {
+            Total = total,
+            Request = request
+        });
     }
 
     [HttpPost("friends/all")]
@@ -79,10 +91,40 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
+        if (command.Page <= 0) return BadRequest("Page can not be negative.");
         var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
-        return Ok(new SplitFriendsArrayResponse());
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var friends = await dbContext.FriendRelations.AsNoTracking()
+            .Where(e => e.TargetUserId == userId)
+            .Select(e => e.FromUserId)
+            .Concat(dbContext.FriendRelations.AsNoTracking()
+                .Where(e => e.FromUserId == userId)
+                .Select(e => e.TargetUserId))
+            .ToArrayAsync();
+        var filtered = await dbContext.UserInfos.AsNoTracking()
+            .Where(e => friends.Contains(e.UserId))
+            .Where(e => e.UserName.Contains(command.Search) || e.Description.Contains(command.Search))
+            .Select(e => new FriendInfo
+            {
+                UserId = e.UserId,
+                UserName = e.UserName,
+                Description = e.Description,
+                Avatar = e.Avatar,
+                Location = e.Location,
+                Online = e.Online,
+                Tags = e.Tags
+            })
+            .Skip((command.Page - 1) * 16)
+            .Take(16)
+            .ToArrayAsync();
+
+        return Ok(new SplitFriendsArrayResponse
+        {
+            Users = filtered,
+            Count = filtered.Length
+        });
     }
 
     [HttpPost("friends/online")]
@@ -94,10 +136,41 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
+        if (command.Page <= 0) return BadRequest("Page can not be negative.");
         var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
-        return Ok(new SplitFriendsArrayResponse());
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var friends = await dbContext.FriendRelations.AsNoTracking()
+            .Where(e => e.TargetUserId == userId)
+            .Select(e => e.FromUserId)
+            .Concat(dbContext.FriendRelations.AsNoTracking()
+                .Where(e => e.FromUserId == userId)
+                .Select(e => e.TargetUserId))
+            .ToArrayAsync();
+        var filtered = await dbContext.UserInfos.AsNoTracking()
+            .Where(e => friends.Contains(e.UserId))
+            .Where(e => e.Online)
+            .Where(e => e.UserName.Contains(command.Search) || e.Description.Contains(command.Search))
+            .Select(e => new FriendInfo
+            {
+                UserId = e.UserId,
+                UserName = e.UserName,
+                Description = e.Description,
+                Avatar = e.Avatar,
+                Location = e.Location,
+                Online = e.Online,
+                Tags = e.Tags
+            })
+            .Skip((command.Page - 1) * 16)
+            .Take(16)
+            .ToArrayAsync();
+
+        return Ok(new SplitFriendsArrayResponse
+        {
+            Users = filtered,
+            Count = filtered.Length
+        });
     }
 
     [HttpPost("friends/recent")]
@@ -109,10 +182,40 @@ public class AccountController(
         [FromBody] SplitPageFriendsCommand command
     )
     {
+        if (command.Page <= 0) return BadRequest("Page can not be negative.");
         var account = await secureRepository.GetAccountAsync(userId);
         if (account is null)
             return NotFound("User doesn't exist.");
-        return Ok(new SplitFriendsArrayResponse());
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var friends = await dbContext.FriendRelations.AsNoTracking()
+            .Where(e => e.TargetUserId == userId)
+            .Select(e => e.FromUserId)
+            .Concat(dbContext.FriendRelations.AsNoTracking()
+                .Where(e => e.FromUserId == userId)
+                .Select(e => e.TargetUserId))
+            .ToArrayAsync();
+        var filtered = await dbContext.UserInfos.AsNoTracking()
+            .Where(e => friends.Contains(e.UserId))
+            .Where(e => e.UserName.Contains(command.Search) || e.Description.Contains(command.Search))
+            .Select(e => new FriendInfo
+            {
+                UserId = e.UserId,
+                UserName = e.UserName,
+                Description = e.Description,
+                Avatar = e.Avatar,
+                Location = e.Location,
+                Online = e.Online,
+                Tags = e.Tags
+            })
+            .Skip((command.Page - 1) * 16)
+            .Take(16)
+            .ToArrayAsync();
+
+        return Ok(new SplitFriendsArrayResponse
+        {
+            Users = filtered,
+            Count = filtered.Length
+        });
     }
 
     #endregion
