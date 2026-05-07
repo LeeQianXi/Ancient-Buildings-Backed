@@ -24,14 +24,14 @@ public interface ISecureRepository
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>账号信息</returns>
-    ValueTask<AccountUserInfo?> GetAccountAsync(long userId);
+    ValueTask<SecureUserPublicInfo?> GetAccountAsync(long userId);
 
     /// <summary>
     ///     根据邮箱获取账号
     /// </summary>
     /// <param name="email">邮箱</param>
     /// <returns>账号信息</returns>
-    ValueTask<AccountUserInfo?> GetAccountByEmailAsync(string email);
+    ValueTask<SecureUserPublicInfo?> GetAccountByEmailAsync(string email);
 
     /// <summary>
     ///     新建账号
@@ -42,7 +42,7 @@ public interface ISecureRepository
     /// <param name="username">用户名</param>
     /// <returns>新建的账号信息</returns>
     /// <exception cref="AccountException">邮箱已注册时抛出</exception>
-    ValueTask<AccountUserInfo> InsertAccountAsync(string email, string passwordHash, string username);
+    ValueTask<SecureUserPublicInfo> InsertAccountAsync(string email, string passwordHash, string username);
 
     /// <summary>
     ///     修改账号密码
@@ -51,7 +51,7 @@ public interface ISecureRepository
     /// <param name="newPasswordHash">新密码哈希</param>
     /// <returns>是否修改成功</returns>
     /// <exception cref="AccountException">账号不存在时抛出</exception>
-    ValueTask<AccountUserInfo> ChangePasswordAsync(long userId, string newPasswordHash);
+    ValueTask<SecureUserPublicInfo> ChangePasswordAsync(long userId, string newPasswordHash);
 
     /// <summary>
     ///     修改账号邮箱
@@ -59,7 +59,7 @@ public interface ISecureRepository
     /// <param name="userId">用户ID</param>
     /// <param name="newEmail">新邮箱</param>
     /// <returns>是否修改成功</returns>
-    ValueTask<AccountUserInfo> ChangeEmailAsync(long userId, string newEmail);
+    ValueTask<SecureUserPublicInfo> ChangeEmailAsync(long userId, string newEmail);
 
     /// <summary>
     ///     删除账号

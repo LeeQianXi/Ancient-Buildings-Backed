@@ -5,7 +5,7 @@ services:
     container_name: pg-service
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: buildings
     ports:
       - "5432:5432"

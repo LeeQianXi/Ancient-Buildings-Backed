@@ -15,11 +15,13 @@ namespace Buildings.Controllers;
 [Tags("Authentication")]
 public class SecureController(
     ILogger<SecureController> logger,
-    ISecureRepository secureRepository
+    ISecureRepository secureRepository,
+    IAccountRepository accountRepository
 ) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register")]
+    [EndpointSummary("注册账号")]
     [ProducesResponseType<AuthRegisterResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -34,6 +36,7 @@ public class SecureController(
         if (await secureRepository.ExistsAccountAsync(command.Email)) return Unauthorized("Email already registered");
         var passwdHash = passwordHasher.SaltedHash(command.Password);
         var account = await secureRepository.InsertAccountAsync(command.Email, passwdHash, command.Username);
+        await accountRepository.InitializeUserAsync(account);
         return Ok(new AuthRegisterResponse
         {
             UserId = account.UserId,
@@ -45,6 +48,7 @@ public class SecureController(
 
     [AllowAnonymous]
     [HttpPost("login")]
+    [EndpointSummary("帐号密码登陆账号")]
     [ProducesResponseType<AuthLoginResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -77,6 +81,7 @@ public class SecureController(
 
     [AllowAnonymous]
     [HttpPost("refresh")]
+    [EndpointSummary("刷新AccessToken")]
     [ProducesResponseType<RefreshTokenResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -101,6 +106,7 @@ public class SecureController(
     }
 
     [HttpPost("changeEmail")]
+    [EndpointSummary("修改账号绑定邮箱")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -117,6 +123,7 @@ public class SecureController(
     }
 
     [HttpPost("changePassword")]
+    [EndpointSummary("修改账号密码")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ChangePasswordAsync(
@@ -133,6 +140,7 @@ public class SecureController(
     }
 
     [HttpGet("changePassword")]
+    [EndpointSummary("获取修改账号密码单次临时验证码")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePasswordAsync([FromHeader] long userId)
@@ -145,6 +153,7 @@ public class SecureController(
 
     [AllowAnonymous]
     [HttpPost("resetPassword")]
+    [EndpointSummary("重置账号密码")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status401Unauthorized)]
@@ -167,6 +176,7 @@ public class SecureController(
 
     [AllowAnonymous]
     [HttpGet("resetPassword")]
+    [EndpointSummary("获取重置账号单次临时验证码")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResetPasswordAsync([FromHeader] string email)

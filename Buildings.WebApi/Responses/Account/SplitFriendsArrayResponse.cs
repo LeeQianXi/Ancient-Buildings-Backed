@@ -10,12 +10,9 @@ public sealed record SplitFriendsArrayResponse
 [Serializable]
 public sealed record FriendInfo
 {
-    public long UserId { get; set; }
-    public string UserName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public bool Online { get; set; }
+    public required long UserId { get; set; }
+    public required string UserName { get; set; } = string.Empty;
+    public string Profile { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
-    public string Avatar { get; set; } = string.Empty;
-    public ICollection<string> Tags { get; set; } = [];
-    public double MatchScore { get; set; }
+    public ICollection<string> Interest { get; set; } = [];
 }

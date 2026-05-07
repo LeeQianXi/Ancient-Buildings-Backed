@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Buildings.Commands.Buildings;
 using Buildings.Infrastructure.Data;
-using Buildings.Responses.Buildings;
+using Buildings.Responses.Building;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +23,8 @@ public class BuildingsController(
     {
         if (InternalCache.TryGet(nameof(GetSummeryAsync), out var data)) return Ok(data);
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        var total = await dbContext.BuildingArticleData.AsNoTracking().CountAsync();
-        var temp = await dbContext.BuildingArticleData.AsNoTracking()
+        var total = await dbContext.BuildingArticleDatas.AsNoTracking().CountAsync();
+        var temp = await dbContext.BuildingArticleDatas.AsNoTracking()
             .Select(d => new { d.Categories, d.Dynasties, d.Provinces })
             .ToArrayAsync();
         HashSet<string> c = [], d = [], p = [];
@@ -57,7 +57,7 @@ public class BuildingsController(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        var articles = dbContext.BuildingArticleData.AsNoTracking()
+        var articles = dbContext.BuildingArticleDatas.AsNoTracking()
             .Where(e =>
                 EF.Functions.JsonContains(e.Categories, command.Categories) &&
                 EF.Functions.JsonContains(e.Provinces, command.Provinces) &&
@@ -99,7 +99,7 @@ public class BuildingsController(
     public async Task<IActionResult> GetArticleByHashAsync([FromRoute] string hash)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        var article = await dbContext.BuildingArticleData.AsNoTracking()
+        var article = await dbContext.BuildingArticleDatas.AsNoTracking()
             .Where(d => d.Hash == hash)
             .Select(d => new BuildingArticle
             {
@@ -130,7 +130,7 @@ public class BuildingsController(
     public async Task<IActionResult> GetArticleByNameAsync([FromRoute] string name)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        var article = await dbContext.BuildingArticleData.AsNoTracking()
+        var article = await dbContext.BuildingArticleDatas.AsNoTracking()
             .Where(d => d.Path == name)
             .Select(d => new { d.Hash, d.Path })
             .FirstOrDefaultAsync();
