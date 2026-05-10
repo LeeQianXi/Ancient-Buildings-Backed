@@ -1,8 +1,10 @@
 using Buildings.Infrastructure.Data.Configurations;
 using Buildings.Infrastructure.Data.Configurations.Account;
+using Buildings.Infrastructure.Data.Configurations.Forum;
 using Buildings.Infrastructure.Data.Configurations.Secure;
 using Buildings.Infrastructure.Data.Entities;
 using Buildings.Infrastructure.Data.Entities.Account;
+using Buildings.Infrastructure.Data.Entities.Forum;
 using Buildings.Infrastructure.Data.Entities.Secure;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,12 +37,17 @@ public class BuildingDbContext(DbContextOptions<BuildingDbContext> options) : Db
     /// </summary>
     public DbSet<FriendRelationInfo> FriendRelationInfos { get; set; }
 
+    public DbSet<BlogComment> BlogComments { get; set; }
+    public DbSet<BlogPost> BlogPosts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfiguration(new UserSecureInfoConfiguration())
             .ApplyConfiguration(new UserSecureTokenConfiguration())
             .ApplyConfiguration(new BuildingArticleConfiguration())
+            .ApplyConfiguration(new BlogCommentConfiguration())
+            .ApplyConfiguration(new BlogPostConfiguration())
             .ApplyConfiguration(new UserAccountInfoConfiguration())
             .ApplyConfiguration(new FriendRelationInfoConfiguration());
     }

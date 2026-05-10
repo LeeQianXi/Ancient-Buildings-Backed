@@ -9,5 +9,4 @@ public sealed record AccountPublicInfoResponse
     public required string Location { get; set; } = string.Empty;
     public string Gender { get; set; } = Dtos.Gender.Unknown.Code;
     public ICollection<string> Interest { get; set; } = [];
-    public required bool Online { get; set; }
 }

@@ -18,6 +18,7 @@ public class BuildingsController(
 ) : ControllerBase
 {
     [HttpGet]
+    [EndpointSummary("获取文章统计信息")]
     [ProducesResponseType<BuildingSummaryResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSummeryAsync()
     {
@@ -47,6 +48,7 @@ public class BuildingsController(
     }
 
     [HttpPost]
+    [EndpointSummary("获取文章分页过滤列表")]
     [ProducesResponseType<SplitPageResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetSplitPageAsync(
@@ -94,6 +96,7 @@ public class BuildingsController(
     /// <param name="hash"></param>
     /// <returns></returns>
     [HttpGet("{hash}")]
+    [EndpointSummary("获取文章")]
     [ProducesResponseType<BuildingArticle>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArticleByHashAsync([FromRoute] string hash)
@@ -125,6 +128,7 @@ public class BuildingsController(
     /// <param name="name"></param>
     /// <returns></returns>
     [HttpGet("name/{name}")]
+    [EndpointSummary("获取文章")]
     [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetArticleByNameAsync([FromRoute] string name)
