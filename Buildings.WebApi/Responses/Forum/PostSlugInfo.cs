@@ -1,12 +1,6 @@
-using Buildings.Dtos;
+using Buildings.Responses.Account;
 
 namespace Buildings.Responses.Forum;
-
-public class ForumSplitPageResponse
-{
-    public required int TotalCount { get; init; }
-    public ICollection<PostSlugInfo> DisplayedPosts { get; init; } = [];
-}
 
 [Serializable]
 public sealed record PostSlugInfo
@@ -17,7 +11,7 @@ public sealed record PostSlugInfo
     public bool IsAi { get; init; } = false;
     public required string Tag { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
-    public required AccountUserPublicInfos Author { get; init; }
+    public required AccountPublicInfoResponse Author { get; init; }
     public required PostStats Stats { get; init; }
 }
 

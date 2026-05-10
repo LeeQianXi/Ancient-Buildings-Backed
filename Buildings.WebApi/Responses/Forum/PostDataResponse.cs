@@ -1,4 +1,5 @@
 using Buildings.Dtos;
+using Buildings.Responses.Account;
 
 namespace Buildings.Responses.Forum;
 
@@ -11,6 +12,6 @@ public sealed record PostDataResponse
     public required string Tag { get; init; }
     public required string Data { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
-    public required AccountUserPublicInfos Author { get; init; }
+    public required AccountPublicInfoResponse Author { get; init; }
     public required PostStats Stats { get; init; }
 }
