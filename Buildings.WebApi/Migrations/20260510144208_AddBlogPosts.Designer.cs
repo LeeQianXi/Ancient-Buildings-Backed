@@ -246,7 +246,7 @@ namespace Buildings.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id")
-                        .HasName("PK_BlogComment_PostId");
+                        .HasName("PK_BlogComment_CommentId");
 
                     b.HasIndex("AuthorId");
 

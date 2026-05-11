@@ -5,6 +5,7 @@ using Buildings.Infrastructure.Repositories;
 using Buildings.Responses.Account;
 using Buildings.Responses.Forum;
 using Buildings.Utils;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,7 @@ public class ForumController(
         var users = await dbContext.UserAccountInfos.AsNoTracking()
             .CountAsync();
         var hot = await dbContext.BlogPosts.AsNoTracking()
-            .OrderBy(e => e.Views + e.Likes * 5)
+            .OrderByDescending(e => e.Views + e.Likes * 5)
             .Take(5)
             .Select(e => new HotPostSlug
             {
@@ -53,17 +54,24 @@ public class ForumController(
     [HttpGet("post")]
     [EndpointSummary("获取帖子分页列表")]
     [ProducesResponseType<PostSlugInfo[]>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPostListAsync([FromQuery] SplitPageForumCommand command)
+    public async Task<IActionResult> GetPostListAsync(
+        [FromQuery] SplitPageForumCommand command,
+        [FromServices] IValidator<SplitPageForumCommand> validator
+    )
     {
+        var validate = await validator.ValidateAsync(command);
+        if (!validate.IsValid) throw new ValidationException(validate.Errors);
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var posts = await dbContext.BlogPosts.AsNoTracking()
-            .OrderBy(e => e.Views + e.Likes * 5)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((command.Page - 1) * command.PageSize)
             .Take(5)
             .Select(e => new PostSlugInfo
             {
                 Id = e.Id,
                 Title = e.Title,
                 Excerpt = e.Data.Substring(0, 128),
+                IsAi = e.IsAi,
                 Tag = e.Tag,
                 Author = new AccountPublicInfoResponse
                 {
@@ -72,18 +80,79 @@ public class ForumController(
                     Profile = e.Author.Profile,
                     Location = e.Author.Location,
                     Gender = e.Author.Gender.Code,
-                    Interest = e.Author.Interest,
+                    Interest = e.Author.Interest
                 },
                 Stats = new PostStats
                 {
                     CommentsCount = e.Comments.Count,
                     Likes = e.Likes,
-                    Views = e.Views,
-                }
+                    Views = e.Views
+                },
+                CreatedAt = e.CreatedAt
             })
             .ToArrayAsync();
         //TODO: GetData
         return Ok(posts);
+    }
+
+    [Authorize]
+    [HttpPost("publish")]
+    [EndpointSummary("发布帖子")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> PublishNewPostAsync(
+        [FromBody] PublishPostCommand command,
+        [FromServices] IIdGenerator<long> idGenerator
+    )
+    {
+        var account = await accountRepository.GetAccountAsync(command.AuthorId);
+        if (account is null)
+            return NotFound("User doesn't exist.");
+        var postId = idGenerator.NextId() >> 8;
+        var post = new BlogPost
+        {
+            Id = postId,
+            Title = command.Title,
+            Tag = command.IsAi ? "数字纪实" : "同好探讨",
+            Data = command.Data,
+            CreatedAt = DateTimeOffset.UtcNow,
+            AuthorId = command.AuthorId
+        };
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        dbContext.BlogPosts.Add(post);
+        await dbContext.SaveChangesAsync();
+        return Created();
+    }
+
+    [Authorize]
+    [HttpPost("post/{postId:long}/comment")]
+    [EndpointSummary("帖子发送评论")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> PublishCommentAsync(
+        [FromRoute] long postId,
+        [FromBody] PublishCommentCommand command,
+        [FromServices] IIdGenerator<long> idGenerator
+    )
+    {
+        var account = await accountRepository.GetAccountAsync(command.UserId);
+        if (account is null)
+            return NotFound("User doesn't exist.");
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        if (!await dbContext.BlogPosts.AsNoTracking()
+                .AnyAsync(e => e.Id == postId && e.DeleteAt == null))
+            return NotFound("Post doesn't exist.");
+        var commentId = idGenerator.NextId() >> 8;
+        var comment = new BlogComment
+        {
+            Id = commentId,
+            RootId = command.RootId,
+            PostId = postId,
+            AuthorId = command.UserId,
+            Data = command.Content,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        await dbContext.BlogComments.AddAsync(comment);
+        await dbContext.SaveChangesAsync();
+        return Ok();
     }
 
     [HttpGet("post/{postId:long}")]
@@ -113,6 +182,7 @@ public class ForumController(
             Id = postId,
             Title = post.Title,
             Tag = post.Tag,
+            IsAi = post.IsAi,
             Data = post.Data,
             Author = account is null
                 ? new AccountPublicInfoResponse
@@ -135,8 +205,9 @@ public class ForumController(
             {
                 CommentsCount = comments,
                 Likes = post.Likes,
-                Views = post.Views,
-            }
+                Views = post.Views
+            },
+            CreatedAt = post.CreatedAt
         });
     }
 
@@ -156,6 +227,7 @@ public class ForumController(
                 Id = e.Id,
                 Title = e.Title,
                 Excerpt = e.Data.Substring(0, 128),
+                IsAi = e.IsAi,
                 Tag = e.Tag,
                 Author = new AccountPublicInfoResponse
                 {
@@ -164,14 +236,15 @@ public class ForumController(
                     Profile = e.Author.Profile,
                     Location = e.Author.Location,
                     Gender = e.Author.Gender.Code,
-                    Interest = e.Author.Interest,
+                    Interest = e.Author.Interest
                 },
                 Stats = new PostStats
                 {
                     CommentsCount = e.Comments.Count,
                     Likes = e.Likes,
-                    Views = e.Views,
-                }
+                    Views = e.Views
+                },
+                CreatedAt = e.CreatedAt
             })
             .FirstOrDefaultAsync();
         if (post is null) return NotFound();
@@ -179,62 +252,103 @@ public class ForumController(
         return Ok(post);
     }
 
-    [Authorize]
-    [HttpPost("post/{postId:long}/comment")]
-    [EndpointSummary("帖子发送评论")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> PublishCommentAsync(
+
+    [HttpGet("post/{postId:long}/comment")]
+    [EndpointSummary("获取评论列表")]
+    [ProducesResponseType<CommentTreeNode[]>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPostCommentsAsync(
         [FromRoute] long postId,
-        [FromBody] PublishCommentCommand command,
-        [FromServices] IIdGenerator<long> idGenerator
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 12
     )
     {
-        var account = await accountRepository.GetAccountAsync(command.UserId);
-        if (account is null)
-            return NotFound("User doesn't exist.");
+        if (page <= 0 || pageSize <= 0) return BadRequest();
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         if (!await dbContext.BlogPosts.AsNoTracking()
                 .AnyAsync(e => e.Id == postId && e.DeleteAt == null))
-            return NotFound("Post doesn't exist.");
-        var commentId = idGenerator.NextId() >> 8;
-        var comment = new BlogComment
+            return NotFound();
+        var parentComments = await dbContext.BlogComments.AsNoTracking()
+            .Where(e => e.PostId == postId && e.DeleteAt == null && e.RootId == 0)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(12)
+            .Select(e => new { e.Id, e.AuthorId, AuthorName = e.Author.UserName, e.Data, e.IsAi, e.CreatedAt })
+            .ToListAsync();
+        var parentIds = parentComments.Select(p => p.Id).ToList();
+        // 获取每个父评论的子评论计数和第一个子评论
+        var childData = await dbContext.BlogComments.AsNoTracking()
+            .Where(c => parentIds.Contains(c.RootId) && c.DeleteAt == null)
+            .GroupBy(c => c.RootId)
+            .Select(g => new
+            {
+                ParentId = g.Key,
+                ChildCount = g.Count(),
+                FirstChild = g.OrderByDescending(c => c.CreatedAt)
+                    .Select(c => new CommentTreeNode // 注意只能取一个实体，但可以投影
+                    {
+                        Id = c.Id,
+                        AuthorId = c.AuthorId,
+                        AuthorName = c.Author.UserName,
+                        Data = c.Data,
+                        IsAi = c.IsAi,
+                        CreatedAt = c.CreatedAt
+                    }).FirstOrDefault()
+            })
+            .ToListAsync();
+        // 然后合并
+        var result = parentComments.Select(p =>
         {
-            Id = commentId,
-            PostId = postId,
-            AuthorId = command.UserId,
-            Data = command.Content,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-        await dbContext.BlogComments.AddAsync(comment);
-        await dbContext.SaveChangesAsync();
-        return Ok();
+            var children = childData.FirstOrDefault(cd => cd.ParentId == p.Id);
+            return new CommentTreeNode
+            {
+                Id = p.Id,
+                AuthorId = p.AuthorId,
+                AuthorName = p.AuthorName,
+                Data = p.Data,
+                IsAi = p.IsAi,
+                CreatedAt = p.CreatedAt,
+                ChildCount = children?.ChildCount ?? 0,
+                Children = children?.FirstChild != null
+                    ? new[] { children.FirstChild }
+                    : []
+            };
+        }).ToArray();
+        return Ok(result);
     }
 
-    [Authorize]
-    [HttpPost("publish")]
-    [EndpointSummary("发布帖子")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> PublishNewPostAsync(
-        [FromBody] PublishPostCommand command,
-        [FromServices] IIdGenerator<long> idGenerator
+    [HttpGet("post/{postId:long}/comment/{rootCommentId:long}")]
+    [EndpointSummary("获取子评论列表")]
+    [ProducesResponseType<CommentTreeNode[]>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPostCommentsAsync(
+        [FromRoute] long postId,
+        [FromRoute] long rootCommentId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 12
     )
     {
-        var account = await accountRepository.GetAccountAsync(command.AuthorId);
-        if (account is null)
-            return NotFound("User doesn't exist.");
-        var postId = idGenerator.NextId() >> 8;
-        var post = new BlogPost
-        {
-            Id = postId,
-            Title = command.Title,
-            Tag = command.Tag,
-            Data = command.Data,
-            CreatedAt = DateTimeOffset.UtcNow,
-            AuthorId = command.AuthorId,
-        };
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        dbContext.BlogPosts.Add(post);
-        await dbContext.SaveChangesAsync();
-        return Created();
+        if (!await dbContext.BlogPosts.AsNoTracking()
+                .AnyAsync(e => e.Id == postId && e.DeleteAt == null))
+            return NotFound("Post Not Found");
+        var parentComments = await dbContext.BlogComments.AsNoTracking()
+            .Where(e => e.PostId == postId && e.DeleteAt == null && e.RootId == rootCommentId)
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(12)
+            .Select(e => new { e.Id, e.AuthorId, AuthorName = e.Author.UserName, e.Data, e.IsAi, e.CreatedAt })
+            .ToListAsync();
+        // 然后合并
+        var result = parentComments.Select(p => new CommentTreeNode
+        {
+            Id = p.Id,
+            AuthorId = p.AuthorId,
+            AuthorName = p.AuthorName,
+            Data = p.Data,
+            IsAi = p.IsAi,
+            CreatedAt = p.CreatedAt
+        }).ToArray();
+        return Ok(result);
     }
 }

@@ -11,12 +11,15 @@ public class BlogCommentConfiguration : IEntityTypeConfiguration<BlogComment>
         /* ---------- 表 & 主键 ---------- */
         builder.ToTable("BlogComment");
         builder.HasKey(e => e.Id)
-            .HasName("PK_BlogComment_PostId");
+            .HasName("PK_BlogComment_CommentId");
         builder.Property(e => e.Id)
             .IsRequired()
             .ValueGeneratedNever();
         /* ---------- 字段 ---------- */
         builder.Property(e => e.AuthorId)
+            .IsRequired()
+            .ValueGeneratedNever();
+        builder.Property(e => e.RootId)
             .IsRequired()
             .ValueGeneratedNever();
         builder.Property(e => e.PostId)
@@ -37,6 +40,12 @@ public class BlogCommentConfiguration : IEntityTypeConfiguration<BlogComment>
         /* ---------- 索引 ---------- */
         builder.HasIndex(e => e.IsAi)
             .HasDatabaseName("IX_BlogComment_IsAi");
+        builder.HasIndex(e => e.AuthorId)
+            .HasDatabaseName("IX_BlogComment_AuthorId");
+        builder.HasIndex(e => e.PostId)
+            .HasDatabaseName("IX_BlogComment_PostId");
+        builder.HasIndex(e => e.RootId)
+            .HasDatabaseName("IX_BlogComment_RootId");
         // 时间排序/分页
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("IX_BlogComment_CreatedAt");
@@ -51,5 +60,9 @@ public class BlogCommentConfiguration : IEntityTypeConfiguration<BlogComment>
             .HasForeignKey(e => e.PostId)
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
+        builder.HasMany(e => e.ChildComments)
+            .WithOne()
+            .HasForeignKey(e => e.RootId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

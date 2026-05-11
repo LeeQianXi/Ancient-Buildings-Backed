@@ -1,18 +1,17 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using Buildings.Responses.Account;
 using Buildings.Utils;
 
 namespace Buildings.Responses.Forum;
 
 [Serializable]
-public sealed record PostDataResponse
+public sealed record CommentTreeNode
 {
-    public required long Id { get; init; }
-    public required string Title { get; init; }
+    public required long Id { get; set; }
+    public required long AuthorId { get; set; }
+    public required string AuthorName { get; set; }
+    public required string Data { get; set; }
     public bool IsAi { get; init; } = false;
-    public required string Tag { get; init; }
-    public required string Data { get; init; }
 
     [IgnoreDataMember]
     [JsonIgnore]
@@ -22,6 +21,7 @@ public sealed record PostDataResponse
     }
 
     public string CreatedTime { get; set; } = DateTimeOffset.UtcNow.ToRelativeTimeString();
-    public required AccountPublicInfoResponse Author { get; init; }
-    public required PostStats Stats { get; init; }
+
+    public int ChildCount { get; set; } = 0;
+    public ICollection<CommentTreeNode> Children { get; set; } = [];
 }

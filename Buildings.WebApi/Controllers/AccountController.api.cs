@@ -266,7 +266,7 @@ public class AccountController(
         {
             UserId = e.Target.UserId,
             UserName = e.Target.UserName,
-            CreatedAt = e.Entity.CreatedAt.ToRelativeTimeString()
+            CreatedAt = e.Entity.CreatedAt
         }));
     }
 
@@ -404,7 +404,7 @@ public class AccountController(
             .Select(e => e.Target.UserId)
             .ToListAsync();
         var users = dbContext.UserAccountInfos.AsNoTracking()
-            .Where(e => e.UserId != userId)
+            .Where(e => e.UserId != userId && e.UserId != 0)
             .Where(e => !friends.Contains(e.UserId))
             .OrderBy(e => e.UpdatedAt)
             .Where(e => EF.Functions.JsonContains(e.Interest, command.SearchTags));

@@ -14,4 +14,7 @@ public class BlogComment
 
     public virtual BlogPost BlogPost { get; set; } = null!;
     public virtual UserAccountInfo Author { get; set; } = null!;
+
+    public required long RootId { get; init; }
+    public virtual ICollection<BlogComment> ChildComments { get; set; } = [];
 }

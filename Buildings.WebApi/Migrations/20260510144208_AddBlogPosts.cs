@@ -52,7 +52,7 @@ namespace Buildings.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BlogComment_PostId", x => x.Id);
+                    table.PrimaryKey("PK_BlogComment_CommentId", x => x.Id);
                     table.ForeignKey(
                         name: "FK_BlogComment_BlogPost_PostId",
                         column: x => x.PostId,

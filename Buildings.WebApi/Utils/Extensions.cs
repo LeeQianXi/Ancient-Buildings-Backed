@@ -9,13 +9,12 @@ public static class Extensions
     /// <returns>例如 “4分钟前” “2天2小时前” “35天前”</returns>
     public static string ToRelativeTimeString(this DateTimeOffset target)
     {
-        // 使用当前本地时间（自动处理时区偏移），也可改用 UtcNow
         var now = DateTimeOffset.Now;
         var diff = now - target;
 
-        // 处理未来时间（如果目标时间在未来）
+        // 未来时间
         if (diff.TotalSeconds < 0)
-            return "即将到来"; // 或按需处理为“未来X秒/分/小时...”，这里简单处理
+            return "即将到来";
 
         // 小于 1 分钟
         if (diff.TotalSeconds < 60)
@@ -29,17 +28,19 @@ public static class Extensions
         if (diff.TotalHours < 24)
             return $"{diff.Hours}小时前";
 
-        // 小于 30 天：尝试混合显示“天+小时”
-        if (diff.TotalDays < 30)
+        // 大于等于 3 天 → 显示日期
+        if (diff.TotalDays >= 3)
         {
-            var days = diff.Days;
-            var hours = diff.Hours; // diff.Hours 范围 0-23
-            if (hours > 0)
-                return $"{days}天{hours}小时前";
-            return $"{days}天前";
+            // 当年：显示 "MM-dd"，跨年：显示 "yyyy-MM-dd"
+            var format = target.Year == now.Year ? "MM-dd" : "yyyy-MM-dd";
+            return target.ToString(format);
         }
 
-        // 30 天及以上：只显示天数
-        return $"{diff.Days}天前";
+        // 1 ~ 2 天：显示“X天前”或“X天X小时前”
+        var days = diff.Days;
+        var hours = diff.Hours;
+        if (hours > 0)
+            return $"{days}天{hours}小时前";
+        return $"{days}天前";
     }
 }
