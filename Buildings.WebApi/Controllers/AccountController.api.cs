@@ -255,11 +255,8 @@ public class AccountController(
             return NotFound("User doesn't exist.");
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var friends = await dbContext.FriendRelationInfos.AsNoTracking()
-            .Where(e => e.UserId == userId)
-            .Select(e => new { Target = e.Friend, Entity = e })
-            .Union(dbContext.FriendRelationInfos.AsNoTracking()
-                .Where(e => e.FriendId == userId)
-                .Select(e => new { Target = e.User, Entity = e }))
+            .Where(e => e.FriendId == userId)
+            .Select(e => new { Target = e.User, Entity = e })
             .Where(e => e.Entity.Status == RequestStatus.Pending)
             .ToArrayAsync();
         return Ok(friends.Select(e => new NewFriendRequest
