@@ -7,6 +7,7 @@ public sealed record BuildingSummaryResponse
     public ArrayPair Categories { get; set; } = new();
     public ArrayPair Dynasties { get; set; } = new();
     public int Total { get; set; } = 0;
+    public int Red { get; set; } = 0;
 }
 
 [Serializable]

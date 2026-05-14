@@ -12,6 +12,7 @@ public sealed record BuildingArticle
     public required ICollection<string> Categories { get; set; } = [];
     public required string Name { get; set; } = string.Empty;
     public required string Desc { get; set; } = string.Empty;
+    public required bool IsRed { get; set; } = false;
     public required string Subtitle { get; set; } = string.Empty;
     public required string Id { get; set; } = string.Empty;
     public required JsonDocument Body { get; set; }

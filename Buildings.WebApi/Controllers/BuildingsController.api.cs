@@ -25,6 +25,7 @@ public class BuildingsController(
         if (InternalCache.TryGet(nameof(GetSummeryAsync), out var data)) return Ok(data);
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var total = await dbContext.BuildingArticleDatas.AsNoTracking().CountAsync();
+        var red = await dbContext.BuildingArticleDatas.AsNoTracking().Where(e => e.IsRed).CountAsync();
         var temp = await dbContext.BuildingArticleDatas.AsNoTracking()
             .Select(d => new { d.Categories, d.Dynasties, d.Provinces })
             .ToArrayAsync();
@@ -39,6 +40,7 @@ public class BuildingsController(
         var result = new BuildingSummaryResponse
         {
             Total = total,
+            Red = red,
             Categories = c.WrapAsPair(),
             Dynasties = d.WrapAsPair(),
             Provinces = p.WrapAsPair()
@@ -59,11 +61,12 @@ public class BuildingsController(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var validate = await validator.ValidateAsync(command);
         if (!validate.IsValid) throw new ValidationException(validate.Errors);
-        var articles = dbContext.BuildingArticleDatas.AsNoTracking()
-            .Where(e =>
-                EF.Functions.JsonContains(e.Categories, command.Categories) &&
-                EF.Functions.JsonContains(e.Provinces, command.Provinces) &&
-                EF.Functions.JsonContains(e.Dynasties, command.Dynasties));
+        var articles = dbContext.BuildingArticleDatas.AsNoTracking();
+        if (command.FilterRed) articles = articles.Where(e => e.IsRed);
+        articles = articles.Where(e =>
+            EF.Functions.JsonContains(e.Categories, command.Categories) &&
+            EF.Functions.JsonContains(e.Provinces, command.Provinces) &&
+            EF.Functions.JsonContains(e.Dynasties, command.Dynasties));
         articles = command.Searches
             .Aggregate(articles, (current, search) =>
                 current.Where(e =>
@@ -77,6 +80,7 @@ public class BuildingsController(
                 Name = e.DisplayName,
                 Img = e.Image,
                 Desc = e.Description,
+                IsRed = e.IsRed,
                 Dynasties = e.Dynasties,
                 Categories = e.Categories,
                 Provinces = e.Provinces,
@@ -110,6 +114,7 @@ public class BuildingsController(
                 Body = d.Data,
                 Categories = d.Categories,
                 Desc = d.Description,
+                IsRed = d.IsRed,
                 Dynasties = d.Dynasties,
                 Img = d.Image,
                 Name = d.DisplayName,

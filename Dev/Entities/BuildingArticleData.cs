@@ -19,6 +19,7 @@ public class BuildingArticleData
     public ICollection<string> Categories { get; set; } = [];
     public ICollection<string> Dynasties { get; set; } = [];
     public required string DisplayName { get; set; }
+    public required bool IsRed { get; set; }
 }
 
 public class BuildingArticleConfiguration : IEntityTypeConfiguration<BuildingArticleData>
@@ -38,6 +39,9 @@ public class BuildingArticleConfiguration : IEntityTypeConfiguration<BuildingArt
         builder.Property(e => e.Title)
             .IsRequired();
         builder.Property(e => e.SubTitle)
+            .IsRequired();
+        builder.Property(e => e.IsRed)
+            .HasDefaultValue(false)
             .IsRequired();
         builder.Property(e => e.Seo)
             .IsRequired();
@@ -72,6 +76,8 @@ public class BuildingArticleConfiguration : IEntityTypeConfiguration<BuildingArt
         builder.HasIndex(e => e.Hash)
             .HasDatabaseName("IX_BuildingArticleData_Hash")
             .IsUnique();
+        builder.HasIndex(e => e.IsRed)
+            .HasDatabaseName("IX_BuildingArticleData_IsRed");
         builder.HasIndex(e => e.Path)
             .HasDatabaseName("IX_BuildingArticleData_Path")
             .IsUnique();

@@ -17,4 +17,5 @@ public class BuildingArticleData
     public ICollection<string> Categories { get; set; } = [];
     public ICollection<string> Dynasties { get; set; } = [];
     public required string DisplayName { get; set; }
+    public required bool IsRed { get; set; }
 }
