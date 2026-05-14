@@ -7,10 +7,7 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "DATABASE_CONNECTION_STRING_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/connection_string",
-        "PUBLIC_KEY_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/public_key.pem",
-        "PRIVATE_KEY_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/private_key.pem"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "https": {
@@ -19,10 +16,7 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7283;http://localhost:5224",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "DATABASE_CONNECTION_STRING_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/connection_string",
-        "PUBLIC_KEY_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/public_key.pem",
-        "PRIVATE_KEY_FILE": "/home/qianxi/source/repos/Web/Buildings.WebApi/secrets/private_key.pem"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

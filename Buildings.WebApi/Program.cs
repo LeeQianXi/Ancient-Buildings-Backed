@@ -111,7 +111,7 @@ else
     app.UseHsts();
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("SHOW_OPENAPI") is not null)
 {
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
